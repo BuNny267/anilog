@@ -1,0 +1,97 @@
+{% extends "layout.html" %}
+{% from "partials.html" import empty_state %}
+{% set active = 'stats' %}
+{% block title %}Stats — {{ APP_NAME }}{% endblock %}
+{% block page_id %}stats{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="kicker">Analytics</div>
+    <h1>Statistics</h1>
+    <p class="sub">Your watching life, in numbers.</p>
+  </div>
+</div>
+
+{% if not has_data %}
+{{ empty_state('No data yet.', 'Add anime to unlock your statistics.', 'Discover anime', '/discover') }}
+{% else %}
+
+<section class="stat-strip big">
+  <div class="stat-tile"><b>{{ totals.entries }}</b><span>Total Anime</span></div>
+  <div class="stat-tile"><b>{{ totals.episodes }}</b><span>Episodes</span></div>
+  <div class="stat-tile"><b>{{ totals.hours }}</b><span>Hours Watched</span></div>
+  <div class="stat-tile"><b>{{ totals.completed }}</b><span>Completed</span></div>
+  <div class="stat-tile"><b>{{ totals.favorites }}</b><span>Favorites</span></div>
+  <div class="stat-tile"><b>{{ totals.avg_score or '—' }}</b><span>Avg Score</span></div>
+</section>
+
+<div class="stats-grid">
+  <section class="panel chart-panel">
+    <div class="kicker">Breakdown</div>
+    <h2 class="panel-title">By Status</h2>
+    <div class="donut-wrap">
+      <svg viewBox="0 0 120 120" class="donut" role="img" aria-label="Anime by status">
+        <circle cx="60" cy="60" r="48" fill="none" stroke="var(--line)" stroke-width="14"/>
+        <g transform="rotate(-90 60 60)">
+          {% for s in donut %}
+          <circle cx="60" cy="60" r="48" fill="none" stroke="{{ s.color }}" stroke-width="14"
+                  stroke-dasharray="{{ s.dash }} {{ s.gap }}" stroke-dashoffset="{{ s.offset }}"/>
+          {% endfor %}
+        </g>
+        <text x="60" y="57" text-anchor="middle" class="donut-num">{{ totals.entries }}</text>
+        <text x="60" y="72" text-anchor="middle" class="donut-cap">titles</text>
+      </svg>
+      <ul class="legend">
+        {% for st, lbl in status_labels.items() %}
+        <li><i style="background:{{ status_colors[st] }}"></i>{{ lbl }}<b>{{ donut_map.get(st, 0) }}</b></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+
+  <section class="panel chart-panel">
+    <div class="kicker">Genres</div>
+    <h2 class="panel-title">Top Genres</h2>
+    {% if genres %}
+    <ul class="hbars">
+      {% for name, count in genres %}
+      <li><span class="hb-label">{{ name }}</span>
+        <span class="hb-track"><span style="width:{{ (count / max_genre * 100)|round }}%"></span></span>
+        <b>{{ count }}</b></li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="muted">No genre data cached yet.</p>{% endif %}
+  </section>
+
+  <section class="panel chart-panel">
+    <div class="kicker">Timeline</div>
+    <h2 class="panel-title">By Release Year</h2>
+    {% if years %}
+    <ul class="hbars">
+      {% for year, count in years %}
+      <li><span class="hb-label">{{ year }}</span>
+        <span class="hb-track"><span style="width:{{ (count / max_year * 100)|round }}%"></span></span>
+        <b>{{ count }}</b></li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="muted">No year data yet.</p>{% endif %}
+  </section>
+
+  <section class="panel chart-panel wide">
+    <div class="kicker">Activity</div>
+    <h2 class="panel-title">Episodes — Last 12 Months</h2>
+    {% if monthly|map(attribute='eps')|sum > 0 %}
+    <div class="vbars monthly">
+      {% for m in monthly %}
+      <div class="vbar" title="{{ m.label }} — {{ m.eps }} episodes">
+        <span style="height:{{ (m.eps / max_month * 100)|round if max_month else 0 }}%"></span>
+        <label>{{ m.label }}</label>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}<p class="muted">Update episode progress to fill this chart.</p>{% endif %}
+  </section>
+</div>
+{% endif %}
+{% endblock %}

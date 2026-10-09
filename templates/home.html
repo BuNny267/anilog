@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+{% from "partials.html" import card, empty_state, continue_watching_card, event_row %}
+{% block title %}Home — {{ APP_NAME }}{% endblock %}
+{% block page_id %}home{% endblock %}
+
+{% block content %}
+
+{% if airing_week %}
+<section class="section" style="margin-top:20px">
+  <div class="section-head">
+    <div><div class="kicker">On Your Radar</div><h2>Airing This Week</h2></div>
+    <a href="/schedule" class="see-all">Schedule</a>
+  </div>
+  <div class="hscroll">
+    {% for it in airing_week %}
+    <a class="air-card" href="/anime/{{ it.mal_id }}">
+      <img loading="lazy" src="{{ it.image_url or url_for('static', filename='images/placeholder.svg') }}" alt="">
+      <div class="air-body">
+        <div class="air-title">{{ it.title }}</div>
+        <div class="air-ep">EP {{ it.episode or '?' }}</div>
+        <div class="air-cd" data-countdown="{{ it.airing_at }}">…</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% if continue_watching %}
+<section class="section">
+  <div class="section-head">
+    <div><div class="kicker">Jump Back In</div><h2>Continue Watching</h2></div>
+    <a href="/list/watching" class="see-all">See all</a>
+  </div>
+  <div class="hscroll">
+    {% for a in continue_watching %}{{ continue_watching_card(a) }}{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if activity %}
+<section class="section">
+  <div class="section-head">
+    <div><div class="kicker">Your Journey</div><h2>Recent Activity</h2></div>
+    <a href="/activity" class="see-all">See all</a>
+  </div>
+  <div class="act-feed compact">
+    {% for ev in activity %}{{ event_row(ev) }}{% endfor %}
+  </div>
+</section>
+{% endif %}
+{% if favorites %}
+<section class="section">
+  <div class="section-head">
+    <div><div class="kicker">Personal Picks</div><h2>Your Favorites</h2></div>
+  </div>
+  <div class="hscroll">
+    {% for a in favorites %}{{ card(a) }}{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if recent_updated %}
+<section class="section">
+  <div class="section-head">
+    <div><div class="kicker">Recently Updated</div><h2>Latest Activity</h2></div>
+    <a href="/recent" class="see-all">See all</a>
+  </div>
+  <div class="hscroll">
+    {% for a in recent_updated %}{{ card(a) }}{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if planned %}
+<section class="section">
+  <div class="section-head">
+    <div><div class="kicker">Up Next</div><h2>From Your Watchlist</h2></div>
+    <a href="/list/plan_to_watch" class="see-all">See all</a>
+  </div>
+  <div class="hscroll">
+    {% for a in planned %}{{ card(a) }}{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if not has_any %}
+{{ empty_state('Your library is empty',
+   'Start discovering anime and build your first watchlist. Every anime you add will appear right here.',
+   'Discover anime', '/discover') }}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% block title %}Register — {{ APP_NAME }}{% endblock %}
+{% block page_id %}register{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-3-6 3z"/></svg></span>
+      <h1>Create account</h1>
+    </div>
+    {% if error %}<div class="auth-error">{{ error }}</div>{% endif %}
+    <form method="POST" class="auth-form">
+      <div class="auth-field">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" placeholder="3-30 chars, letters/numbers/_" required autofocus minlength="3" maxlength="30">
+      </div>
+      <div class="auth-field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="your@email.com" required>
+      </div>
+      <div class="auth-field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Min 8 characters" required minlength="8">
+      </div>
+      <button type="submit" class="btn btn-primary auth-btn">Register</button>
+    </form>
+    <div class="auth-links">
+      <span>Already have an account?</span><a href="/login">Login</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

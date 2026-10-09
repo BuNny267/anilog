@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block title %}Forgot Password — {{ APP_NAME }}{% endblock %}
+{% block page_id %}forgot{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-3-6 3z"/></svg></span>
+      <h1>Reset password</h1>
+    </div>
+    {% if sent %}
+    <div class="auth-success">{{ message }}</div>
+    {% else %}
+    <p class="auth-desc">Enter your email and we'll send you a link to reset your password.</p>
+    <form method="POST" class="auth-form">
+      <div class="auth-field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="your@email.com" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary auth-btn">Send reset link</button>
+    </form>
+    {% endif %}
+    <div class="auth-links"><a href="/login">Back to login</a></div>
+  </div>
+</div>
+{% endblock %}

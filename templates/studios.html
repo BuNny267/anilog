@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% set active = 'discover' %}
+{% block title %}Studios — {{ APP_NAME }}{% endblock %}
+{% block page_id %}studios{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="kicker">Browse</div>
+    <h1>Studios</h1>
+    <p class="sub">{{ studios|length }} animation studios in your cache.</p>
+  </div>
+</div>
+<div class="studio-grid">
+  {% for name, count in studios %}
+  <a class="studio-card" href="/studio/{{ name|urlencode }}">
+    <b>{{ name }}</b>
+    <span>{{ count }} title{{ 's' if count != 1 }}</span>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

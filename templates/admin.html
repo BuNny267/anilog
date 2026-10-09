@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+{% set active = 'admin' %}
+{% block title %}Admin — {{ APP_NAME }}{% endblock %}
+{% block page_id %}admin{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="kicker">Control Room</div>
+    <h1>Admin Dashboard</h1>
+    <p class="sub">Server overview & user management.</p>
+  </div>
+</div>
+
+<div class="admin-stats">
+  <div class="admin-tile"><b>{{ stats.users }}</b><span>Users</span></div>
+  <div class="admin-tile"><b>{{ stats.admins }}</b><span>Admins</span></div>
+  <div class="admin-tile"><b>{{ stats.entries }}</b><span>Entries</span></div>
+  <div class="admin-tile"><b>{{ stats.anime_cached }}</b><span>Anime</span></div>
+  <div class="admin-tile"><b>{{ stats.comments }}</b><span>Comments</span></div>
+  <div class="admin-tile"><b>{{ stats.history }}</b><span>Events</span></div>
+  <div class="admin-tile"><b>{{ stats.cache_rows }}</b><span>Cache</span></div>
+  <div class="admin-tile"><b>{{ stats.disabled }}</b><span>Disabled</span></div>
+</div>
+
+<div class="admin-wrap">
+  <table class="admin-table">
+    <thead><tr><th>ID</th><th>User</th><th>Email</th><th>Entries</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>#{{ u.id }}</td>
+        <td><b>{{ u.display_name or u.username }}</b> <span class="muted">@{{ u.username }}</span>{% if u.is_admin %} <span class="badge badge-success">admin</span>{% endif %}</td>
+        <td class="muted">{{ u.email or '—' }}</td>
+        <td>{{ u.entries }}</td>
+        <td class="muted">{{ u.created_at|dt }}</td>
+        <td>{% if u.is_active %}<span class="badge badge-success">active</span>{% else %}<span class="badge badge-warning">disabled</span>{% endif %}</td>
+        <td style="white-space:nowrap">
+          <button class="admin-btn{% if u.is_active %} danger{% endif %}" data-act="active" data-uid="{{ u.id }}">{{ 'Disable' if u.is_active else 'Enable' }}</button>
+          <button class="admin-btn" data-act="admin" data-uid="{{ u.id }}">{{ 'Demote' if u.is_admin else 'Promote' }}</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  $$(".admin-btn").forEach(btn => btn.onclick = async () => {
+    const res = await api(`/api/admin/user/${btn.dataset.uid}/toggle-${btn.dataset.act}`, { method: "POST" });
+    if (res.ok) location.reload();
+    else toast(res.error || "Failed", "error");
+  });
+});
+</script>
+{% endblock %}

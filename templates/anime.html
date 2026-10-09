@@ -1,0 +1,378 @@
+{% extends "layout.html" %}
+{% set active = '' %}
+{% block title %}{{ meta.title if meta else 'Anime' }} — {{ APP_NAME }}{% endblock %}
+{% block page_id %}anime{% endblock %}
+{% from "partials.html" import sicon %}
+
+{% block content %}
+{% if error and not meta %}
+  {% from "partials.html" import empty_state %}
+  {{ empty_state('Could not load this anime', error ~ ' Cached data will appear here once available.', 'Back to Discover', '/discover') }}
+{% else %}
+
+<div class="page">
+  <!-- ===== HERO ===== -->
+  <header class="hero">
+    <div class="hero__backdrop" style="background-image:url('{{ meta.image_url or '' }}')" aria-hidden="true"></div>
+    <div class="hero__texture" aria-hidden="true"></div>
+
+    <div class="hero__shell">
+      <nav class="hero__topbar" aria-label="Anime actions">
+        <button class="icon-btn" type="button" onclick="history.back()" aria-label="Go back">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 18 9 12l6-6"/>
+          </svg>
+        </button>
+        <div class="hero__nav-group">
+          {% if entry %}
+          <button class="icon-btn{% if entry.favorite %} on{% endif %}" id="fav-round" type="button" aria-label="Favorite">
+            <svg class="icon" viewBox="0 0 24 24" fill="{% if entry.favorite %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+            </svg>
+          </button>
+          {% endif %}
+          <button class="icon-btn" id="share-btn" type="button" aria-label="Share">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="18" cy="5" r="2.3"/><circle cx="6" cy="12" r="2.3"/><circle cx="18" cy="19" r="2.3"/>
+              <path d="m8 10.9 7.6-4.4M8 13.1l7.6 4.4"/>
+            </svg>
+          </button>
+        </div>
+      </nav>
+
+      <div class="hero__grid">
+        <!-- Poster (clean, no badges) -->
+        <div class="poster-wrap">
+          <img class="poster" src="{{ meta.image_url or url_for('static', filename='images/placeholder.svg') }}" alt="{{ meta.title }}">
+        </div>
+
+        <!-- Copy + Progress -->
+        <div class="hero__copy">
+          <div class="hero__head">
+            <h1 class="title">{{ meta.title }}</h1>
+            {% if meta.title_japanese %}<p class="jp-title">{{ meta.title_japanese }}</p>{% endif %}
+            <div class="hero__meta" aria-label="Anime metadata">
+              {% if meta.score %}
+              <span class="pill pill--score"><span class="pill__star">★</span> {{ '%.1f'|format(meta.score|s10) }}</span>
+              {% endif %}
+              {% if entry %}<span class="pill" id="status-pill">{{ STATUS_LABELS.get(entry.status) }}</span>{% endif %}
+              {% if entry and entry.rewatch_count %}<span class="pill">↻ {{ entry.rewatch_count + 1 }}x watch</span>{% endif %}
+              {% if meta.episodes %}<span class="pill">{{ meta.episodes }} episodes</span>{% endif %}
+              {% if meta.type %}<span class="pill">{{ meta.type }}</span>{% endif %}
+              {% if meta.duration %}<span class="pill d-only">{{ meta.duration|dur }}</span>{% endif %}
+              {% if meta.year %}<span class="pill">{{ meta.year }}</span>{% endif %}
+            </div>
+          </div>
+
+          <div class="hero__actions">
+            {% if entry %}
+              <button class="btn btn--primary" id="edit-full">✓ {{ STATUS_LABELS.get(entry.status) }}</button>
+              {% if entry.status == 'completed' %}<button class="btn btn--secondary" id="rewatch-btn">↻ Rewatch</button>{% endif %}
+            {% else %}
+              <button class="btn btn--primary" id="add-main" data-json='{{ sheet_data|tojson }}'>+ Add to List</button>
+            {% endif %}
+            {% if meta.trailer_url %}<a class="btn btn--ghost" href="{{ meta.trailer_url }}" target="_blank" rel="noopener">▶ Trailer</a>{% endif %}
+            <a class="btn btn--ghost source-btn" href="https://myanimelist.net/anime/{{ mal_id }}" target="_blank" rel="noopener">↗ Source</a>
+          </div>
+
+          <aside class="progress-panel" id="entry-panel" {% if not entry %}style="display:none"{% endif %}>
+            <div class="progress-episode-row">
+              <div class="episode-counter">
+                <strong class="episode-count" id="ep-val">{{ entry.current_episode if entry else 0 }}</strong>
+                <span class="episode-total">/ <span class="ani-ep-max">{{ (entry.total_episodes or meta.episodes or '?') if entry else (meta.episodes or '?') }}</span> <span class="ep-word">episodes</span></span>
+              </div>
+              <div class="stepper">
+                <button type="button" data-ep-delta="-1" aria-label="Decrease">−</button>
+                <button type="button" data-ep-delta="1" aria-label="Increase">+</button>
+              </div>
+            </div>
+            {% set total = (entry.total_episodes or meta.episodes) if entry else meta.episodes %}
+            <div class="progress-track"><span class="ani-progress-fill" style="width:{{ (entry.current_episode|pct(total)) if entry else 0 }}%"></span></div>
+            <div class="progress-bottom">
+              <span class="progress-percent"><span class="ani-progress-pct">{{ (entry.current_episode|pct(total)) if entry else 0 }}</span>%</span>
+              <span class="progress-date">
+                {% if entry %}
+                <span id="added-date">Added {{ entry.date_added|dt }}</span>
+                {% if entry.date_completed %}<span id="completed-date"> · Done {{ entry.date_completed|dt }}</span>{% endif %}
+                {% endif %}
+              </span>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    {% if entry and entry.notes %}
+    <section class="section">
+      <div class="section__kicker">Your Journal</div>
+      <div class="section__heading-row"><h2 class="section__heading">Notes</h2></div>
+      <div class="notes-card">{{ entry.notes }}</div>
+    </section>
+    {% endif %}
+    <!-- ===== Overview (synopsis container) ===== -->
+    {% if meta.synopsis %}
+    <section class="section">
+      <div class="section__kicker">Overview</div>
+      <div class="section__heading-row">
+        <h2 class="section__heading">About this anime</h2>
+      </div>
+      <div class="synopsis-card" id="synopsis-card">
+        <span class="synopsis-quote" aria-hidden="true">“</span>
+        <div class="synopsis-body" id="synopsis">{{ meta.synopsis }}</div>
+        <div class="synopsis-fade"></div>
+      </div>
+      <div class="synopsis-toggle-wrap">
+        <button class="synopsis-toggle" id="synopsis-toggle" type="button">
+          <span>Read more</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- ===== Genres ===== -->
+    {% if meta.genres %}
+    {% set gicons = {'Action':'sword','Adventure':'compass','Comedy':'smile','Drama':'masks','Fantasy':'sparkles','Horror':'ghost','Mahou Shoujo':'sparkles','Mecha':'bot','Music':'music','Mystery':'search','Psychological':'activity','Romance':'heart','Sci-Fi':'rocket','Slice of Life':'coffee','Sports':'trophy','Supernatural':'star4','Thriller':'crosshair','Historical':'landmark','Military':'shield','School':'gradcap','Martial Arts':'sword','Racing':'activity','Isekai':'compass'} %}
+    <section class="section">
+      <div class="genre-band">
+        <div class="genre-band__copy">
+          <div class="section__kicker">Genres</div>
+          <h2 class="section__heading">Themes & tags</h2>
+          <p class="section__subtext">Tap any genre to filter your list.</p>
+        </div>
+        <div class="genre-band__tags">
+          {% for g in meta.genres %}
+          <a class="genre-chip" href="/list/all?genre={{ g|urlencode }}">
+            <span class="genre-chip__icon">{{ sicon(gicons.get(g, 'tag')) }}</span>
+            <span>{{ g }}</span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- ===== Information ===== -->
+    <section class="section">
+      <div class="section__kicker">Details</div>
+      <div class="section__heading-row">
+        <h2 class="section__heading">Information</h2>
+        <p class="section__subtext">Core metadata & official streams.</p>
+      </div>
+
+      <div class="info-layout">
+        <div class="info-grid">
+            {% if meta.score %}
+            <div class="info-item">
+              <span class="info-item__icon gold">{{ sicon('star') }}</span>
+              <span class="info-label">Score</span>
+              <span class="info-value gold">{{ '%.2f'|format(meta.score|s10) }}</span>
+            </div>
+            {% endif %}
+            <div class="info-item">
+              <span class="info-item__icon">{{ sicon('film') }}</span>
+              <span class="info-label">Episodes</span>
+              <span class="info-value">{{ meta.episodes or '—' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-item__icon">{{ sicon('clock') }}</span>
+              <span class="info-label">Duration</span>
+              <span class="info-value">{{ meta.duration|dur if meta.duration else '—' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-item__icon">{{ sicon('broadcast') }}</span>
+              <span class="info-label">Status</span>
+              <span class="info-value">{{ meta.status or '—' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-item__icon">{{ sicon('calendar') }}</span>
+              <span class="info-label">Aired</span>
+              <span class="info-value">{% if meta.aired_from %}{{ meta.aired_from|dt }}{% else %}—{% endif %}{% if meta.aired_to %} → {{ meta.aired_to|dt }}{% endif %}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-item__icon">{{ sicon('leaf') }}</span>
+              <span class="info-label">Season</span>
+              <span class="info-value">{{ meta.season or '—' }}{{ ' ' ~ meta.year if meta.year and meta.season else '' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-item__icon">{{ sicon('book') }}</span>
+              <span class="info-label">Source</span>
+              <span class="info-value">{{ meta.source or '—' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-item__icon">{{ sicon('brush') }}</span>
+              <span class="info-label">Studio</span>
+              <span class="info-value">{{ meta.studios|join(', ') if meta.studios else '—' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-item__icon">{{ sicon('chart') }}</span>
+              <span class="info-label">Popularity</span>
+              <span class="info-value">#{{ meta.popularity or '—' }}</span>
+            </div>
+          </div>
+
+        {% if meta.streaming %}
+        <aside class="platform-card">
+          <div class="platform-card__head">
+            <h3 class="platform-card__heading">Where to watch</h3>
+            <span class="platform-count">{{ meta.streaming|length }}</span>
+          </div>
+          <div class="platform-list">
+            {% for s in meta.streaming[:5] %}
+            {% set n = s.name|lower %}
+            {% set c = '#F47521' if 'crunchyroll' in n else '#E50914' if 'netflix' in n else '#1CE783' if 'hulu' in n else '#00A8E1' if 'prime' in n else '#113CCF' if 'disney' in n else '#FF0000' if 'youtube' in n else '#00E0D0' if 'hidive' in n else '#00A1D6' if 'bilibili' in n else '#5B4BB6' if 'funimation' in n else '' %}
+            <a class="platform" href="{{ s.url }}" target="_blank" rel="noopener"{% if c %} style="--pm:{{ c }}"{% endif %}>
+              <span class="platform__left">
+                <span class="platform__mark">{{ s.name[:2]|upper }}</span>
+                <span class="platform__name">{{ s.name }}</span>
+              </span>
+              <span class="platform__open">Open ↗</span>
+            </a>
+            {% endfor %}
+          </div>
+        </aside>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- ===== Cast ===== -->
+    <section class="section">
+      <div class="section__kicker">Cast</div>
+      <div class="section__heading-row">
+        <h2 class="section__heading">Characters</h2>
+        <div class="cast-switcher">
+          <button class="tabs-btn active" data-lang="jp" id="va-jp">JP</button>
+          <button class="tabs-btn" data-lang="en" id="va-en">EN</button>
+        </div>
+      </div>
+      <div class="people-track" id="cast-list">
+        <div class="ani-loading"><div class="ani-spinner"></div>Loading…</div>
+      </div>
+    </section>
+
+    <!-- ===== Staff ===== -->
+    <section class="section">
+      <div class="section__kicker">Production</div>
+      <div class="section__heading-row">
+        <h2 class="section__heading">Key staff</h2>
+        <p class="section__subtext">Creators & production team.</p>
+      </div>
+      <div class="people-track" id="staff-list">
+        <div class="ani-loading"><div class="ani-spinner"></div>Loading…</div>
+      </div>
+    </section>
+
+    <!-- ===== Franchise ===== -->
+    <section class="section">
+      <div class="section__kicker">Universe</div>
+      <div class="section__heading-row">
+        <h2 class="section__heading">Franchise & related</h2>
+        <p class="section__subtext">Follow the story in order.</p>
+      </div>
+      <div class="franchise" id="franchise" data-mal="{{ mal_id }}">
+        <div class="ani-loading"><div class="ani-spinner"></div>Loading…</div>
+      </div>
+    </section>
+
+    <!-- ===== Recommendations ===== -->
+    <section class="section">
+      <div class="section__kicker">Recommendations</div>
+      <div class="section__heading-row">
+        <h2 class="section__heading">You may also like</h2>
+        <p class="section__subtext">Similar mood, themes, or audience.</p>
+      </div>
+      <div class="recommendation-track" id="recommendations-list">
+        <div class="ani-loading"><div class="ani-spinner"></div>Loading…</div>
+      </div>
+    </section>
+
+    <!-- ===== Comments ===== -->
+    <section class="section">
+      <div class="section__kicker">Discussion</div>
+      <div class="section__heading-row">
+        <h2 class="section__heading">Comments <span class="section__subtext" id="comment-count"></span></h2>
+        <div class="cast-switcher">
+          <button class="tabs-btn active" data-csort="new">New</button>
+          <button class="tabs-btn" data-csort="top">Top</button>
+        </div>
+      </div>
+      <div class="discussion-card" id="comments-section">
+        <form class="comment-form" id="comment-form">
+          <textarea id="comment-input" maxlength="1000" rows="3" placeholder="Share your thoughts about this anime…"></textarea>
+          <button class="btn btn--primary" type="submit">Post comment</button>
+        </form>
+        <div class="comments" id="comments-list">
+          <div class="ani-loading"><div class="ani-spinner"></div>Loading comments…</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+{% if error %}<p class="ani-stale">⚠ {{ error }} — showing cached data.</p>{% endif %}
+<button id="sheet-data-holder" hidden data-json='{{ sheet_data|tojson }}'></button>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const rewatchBtn = document.getElementById("rewatch-btn");
+  if (rewatchBtn) {
+    rewatchBtn.onclick = async () => {
+      const ok = await confirmBox("Start rewatch?", "This will reset progress to episode 0.");
+      if (!ok) return;
+      const data = await api("/api/anime/{{ mal_id }}/rewatch", { method: "POST" });
+      if (data.error) return toast(data.error, "error");
+      toast("Rewatch started! 🎉", "success");
+      updateAnimePageEntry({ current_episode: 0, status: "watching", total_episodes: {{ meta.episodes or 0 }} });
+    };
+  }
+
+  /* Synopsis read-more toggle */
+  const synCard = document.getElementById("synopsis-card");
+  const syn = document.getElementById("synopsis");
+  const tog = document.getElementById("synopsis-toggle");
+  if (syn && tog && synCard) {
+    requestAnimationFrame(() => {
+      if (syn.scrollHeight <= syn.clientHeight + 4) {
+        tog.parentElement.style.display = "none";
+        const fade = synCard.querySelector(".synopsis-fade");
+        if (fade) fade.style.display = "none";
+      }
+    });
+    tog.onclick = () => {
+      const open = synCard.classList.toggle("open");
+      tog.querySelector("span").textContent = open ? "Show less" : "Read more";
+    };
+  }
+
+  const shareBtn = document.getElementById("share-btn");
+  if (shareBtn) shareBtn.onclick = async () => {
+    try {
+      if (navigator.share) await navigator.share({ title: document.title, url: location.href });
+      else { await navigator.clipboard.writeText(location.href); toast("Link copied ✓", "success"); }
+    } catch (e) { if (e.name !== "AbortError") toast("Share failed", "error"); }
+  };
+
+  const favRound = document.getElementById("fav-round");
+  if (favRound) favRound.onclick = async () => {
+    const data = await api("/api/list/favorite", { method: "POST", body: JSON.stringify({ mal_id: {{ mal_id }} }) });
+    if (data.error) return toast(data.error, "error");
+    favRound.classList.toggle("on", data.favorite);
+    const p = favRound.querySelector("svg path");
+    if (p) p.setAttribute("fill", data.favorite ? "currentColor" : "none");
+    syncAnimeUI({{ mal_id }}, true, { favorite: data.favorite });
+    toast(data.favorite ? "Added to favorites ♥" : "Removed from favorites", "success");
+  };
+
+  $$(".tabs-btn").forEach(btn => btn.onclick = () => {
+    currentVaLang = btn.dataset.lang;
+    $$(".tabs-btn").forEach(b => b.classList.toggle("active", b === btn));
+    renderCast(allCastData);
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% from "partials.html" import event_row, empty_state %}
+{% set active = 'activity' %}
+{% block title %}Activity — {{ APP_NAME }}{% endblock %}
+{% block page_id %}activity{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="kicker">Your Journey</div>
+    <h1>Activity</h1>
+    <p class="sub">Every episode and status change you've logged.</p>
+  </div>
+</div>
+{% if events %}
+<div class="act-feed">
+  {% for ev in events %}{{ event_row(ev) }}{% endfor %}
+</div>
+{% else %}
+{{ empty_state('No activity yet', 'Update some episodes and your journey will appear here.', 'My List', '/list') }}
+{% endif %}
+{% endblock %}

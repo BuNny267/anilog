@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% block title %}Login — {{ APP_NAME }}{% endblock %}
+{% block page_id %}login{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-3-6 3z"/></svg></span>
+      <h1>Welcome back</h1>
+    </div>
+    {% if error %}<div class="auth-error">{{ error }}</div>{% endif %}
+    <form method="POST" class="auth-form">
+      <div class="auth-field">
+        <label for="identifier">Username or Email</label>
+        <input type="text" id="identifier" name="identifier" placeholder="Enter your username or email" required autofocus>
+      </div>
+      <div class="auth-field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+      </div>
+      <button type="submit" class="btn btn-primary auth-btn">Login</button>
+    </form>
+    <div class="auth-links">
+      <a href="/forgot-password">Forgot password?</a><span>·</span><a href="/register">Create account</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

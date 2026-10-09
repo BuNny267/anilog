@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block title %}Reset Password — {{ APP_NAME }}{% endblock %}
+{% block page_id %}reset{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-3-6 3z"/></svg></span>
+      <h1>Set new password</h1>
+    </div>
+    {% if error %}<div class="auth-error">{{ error }}</div>{% endif %}
+    <form method="POST" class="auth-form">
+      <div class="auth-field">
+        <label for="password">New Password</label>
+        <input type="password" id="password" name="password" placeholder="Min 8 characters" required minlength="8" autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary auth-btn">Reset password</button>
+    </form>
+    <div class="auth-links"><a href="/login">Back to login</a></div>
+  </div>
+</div>
+{% endblock %}

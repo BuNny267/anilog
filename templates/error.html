@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block title %}{{ code }} — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="empty big-empty">
+  <div class="empty-orb">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <h3>{{ code }} — {{ title }}</h3>
+  <p>{{ message }}</p>
+  <a class="btn btn-primary" href="/">Back home</a>
+</div>
+{% endblock %}

@@ -1,0 +1,173 @@
+{% macro icon(name) -%}
+{%- if name == 'home' -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+{%- elif name == 'list' -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-3-6 3z"/></svg>
+{%- elif name == 'discover' -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 4-4 2 2-4z" fill="currentColor" stroke="none"/></svg>
+{%- elif name == 'search' -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5" stroke-linecap="round"/></svg>
+{%- elif name == 'stats' -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 5v14M16 5v14M4 9h4M12 9h4M4 15h4M12 15h4" stroke-width="1.4"/></svg>
+{%- elif name == 'calendar' -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 9h16" stroke-linecap="round"/></svg>
+{%- elif name == 'activity' -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+{%- elif name == 'shield' -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/></svg>
+{%- elif name == 'user' -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-3.4 3.3-5 7-5s6 1.6 7 5"/></svg>
+{%- elif name == 'settings' -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 1-.3 2l2 1.1-2 3.4-2.1-1.1a7 7 0 0 1-1.7 1V21h-4v-2.6a7 7 0 0 1-1.7-1L7.1 18.5l-2-3.4 2-1.1a7 7 0 0 1 0-4L5.1 8.9l2-3.4 2.1 1.1a7 7 0 0 1 1.7-1V3h4v2.6a7 7 0 0 1 1.7 1l2.1-1.1 2 3.4-2 1.1c.2.6.3 1.3.3 2Z"/></svg>
+{%- elif name == 'logout' -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+{%- endif -%}
+{%- endmacro %}
+{% macro navitem(key, href, label, iname, active) -%}
+<a href="{{ href }}" class="nav-item{% if active == key %} active{% endif %}"
+   {% if active == key %}aria-current="page"{% endif %}>{{ icon(iname) }}<span>{{ label }}</span></a>
+{%- endmacro %}
+<!doctype html>
+<html lang="en"
+      data-themepref="{{ settings.get('theme','dark') }}"
+      data-anim="{{ settings.get('animations','on') }}"
+      data-accent="{{ settings.get('accent_color','purple') }}"
+      data-card-layout="{{ settings.get('card_layout','compact') }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#080b13">
+<meta name="color-scheme" content="dark">
+<title>{% block title %}{{ APP_NAME }} — {{ APP_TAGLINE }}{% endblock %}</title>
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/static/sw.js').catch(() => {});
+  });
+}
+</script>
+<script>
+(function(){
+  var pref=document.documentElement.dataset.themepref||"dark";
+  var t=pref==="system"?(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):pref;
+  document.documentElement.dataset.theme=t;
+  if(t==="light"){
+    document.querySelector('meta[name="theme-color"]').setAttribute("content","#f4f6fb");
+    document.querySelector('meta[name="color-scheme"]').setAttribute("content","light");
+  }
+  try{
+    matchMedia("(prefers-color-scheme: light)").addEventListener("change",function(e){
+      if(document.documentElement.dataset.themepref==="system"){
+        document.documentElement.dataset.theme=e.matches?"light":"dark";
+      }
+    });
+  }catch(_){}
+})();
+</script>
+</head>
+<body data-page="{% block page_id %}{% endblock %}"{% if current_user %} class="has-header"{% endif %}>
+<a href="#main-content" class="skip-link">Skip to content</a>
+
+<nav class="topnav">
+  <a class="brand" href="/" aria-label="{{ APP_NAME }} home">
+    <span class="brand-mark">{{ icon('list') }}</span>
+    <span><b>Ani</b>Log</span>
+  </a>
+  {% if current_user %}
+  <div class="nav-links">
+    {{ navitem('home','/','Home','home',active) }}
+    {{ navitem('list','/list','My List','list',active) }}
+    {{ navitem('discover','/discover','Discover','discover',active) }}
+    {{ navitem('schedule','/schedule','Schedule','calendar',active) }}
+    {{ navitem('stats','/stats','Stats','stats',active) }}
+    {{ navitem('activity','/activity','Activity','activity',active) }}
+    {% if current_user.is_admin %}{{ navitem('admin','/admin','Admin','shield',active) }}{% endif %}
+  </div>
+  <div class="topnav-right">
+    <a href="/search" class="icon-btn" aria-label="Search">{{ icon('search') }}</a>
+    <div class="user-menu-wrap">
+      <button class="icon-btn profile-btn" aria-label="Account menu" aria-haspopup="true">
+        <span class="avatar-sm">{{ (current_user.display_name or current_user.username)[0]|upper }}</span>
+      </button>
+      <div class="user-menu" hidden>
+        <div class="user-menu__head">
+          <span class="avatar-sm big">{{ (current_user.display_name or current_user.username)[0]|upper }}</span>
+          <div>
+            <b>{{ current_user.display_name or current_user.username }}</b>
+            <small>@{{ current_user.username }}</small>
+          </div>
+        </div>
+        <a class="user-menu__item" href="/profile">{{ icon('user') }}<span>My Profile</span></a>
+        <a class="user-menu__item" href="/settings">{{ icon('settings') }}<span>Settings</span></a>
+        {% if current_user.is_admin %}<a class="user-menu__item" href="/admin">{{ icon('shield') }}<span>Admin</span></a>{% endif %}
+        <div class="user-menu__sep"></div>
+        <a class="user-menu__item danger" href="/logout">{{ icon('logout') }}<span>Logout</span></a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</nav>
+
+<div class="app">
+  <div class="main">
+    {% if current_user %}
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="{{ APP_NAME }} home">
+        <span class="brand-mark">{{ icon('list') }}</span>
+        <span><b>Ani</b>Log</span>
+      </a>
+      <div class="topbar-actions">
+        <a class="icon-btn" href="/search" aria-label="Search">{{ icon('search') }}</a>
+        <div class="user-menu-wrap">
+          <button class="icon-btn profile-btn" aria-label="Account menu" aria-haspopup="true">
+            <span class="avatar-sm">{{ (current_user.display_name or current_user.username)[0]|upper }}</span>
+          </button>
+          <div class="user-menu" hidden>
+            <div class="user-menu__head">
+              <span class="avatar-sm big">{{ (current_user.display_name or current_user.username)[0]|upper }}</span>
+              <div>
+                <b>{{ current_user.display_name or current_user.username }}</b>
+                <small>@{{ current_user.username }}</small>
+              </div>
+            </div>
+            <a class="user-menu__item" href="/profile">{{ icon('user') }}<span>My Profile</span></a>
+            <a class="user-menu__item" href="/settings">{{ icon('settings') }}<span>Settings</span></a>
+            {% if current_user.is_admin %}<a class="user-menu__item" href="/admin">{{ icon('shield') }}<span>Admin</span></a>{% endif %}
+            <div class="user-menu__sep"></div>
+            <a class="user-menu__item danger" href="/logout">{{ icon('logout') }}<span>Logout</span></a>
+          </div>
+        </div>
+      </div>
+    </header>
+    {% endif %}
+
+    <main class="content" id="main-content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+{% if current_user %}
+<nav class="bottomnav" aria-label="Primary navigation">
+  <a href="/" class="nav-item{% if active=='home' %} active{% endif %}">{{ icon('home') }}<span>Home</span></a>
+  <a href="/list" class="nav-item{% if active=='list' %} active{% endif %}">{{ icon('list') }}<span>My List</span></a>
+  <a href="/schedule" class="nav-item{% if active=='schedule' %} active{% endif %}">{{ icon('calendar') }}<span>Schedule</span></a>
+  <a href="/discover" class="nav-item{% if active=='discover' %} active{% endif %}">{{ icon('discover') }}<span>Discover</span></a>
+  <a href="/stats" class="nav-item{% if active=='stats' %} active{% endif %}">{{ icon('stats') }}<span>Stats</span></a>
+</nav>
+{% endif %}
+
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<div id="overlay-root"></div>
+
+<script>window.CURRENT_USER = {% if current_user %}{{ {"id": current_user.id, "username": current_user.username, "display_name": current_user.display_name, "email_verified": current_user.email_verified, "is_admin": current_user.is_admin}|tojson }}{% else %}null{% endif %};</script>
+<script>window.MYLIST=new Set({{ my_list_json|default('[]')|safe }});</script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

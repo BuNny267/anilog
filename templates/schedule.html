@@ -1,0 +1,127 @@
+{% extends "layout.html" %}
+{% set active = 'schedule' %}
+{% block title %}Schedule — {{ APP_NAME }}{% endblock %}
+{% block page_id %}schedule{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="kicker">This Week</div>
+    <h1>Airing Schedule</h1>
+    <p class="sub">What's airing in the next 7 days</p>
+  </div>
+</div>
+
+<div class="week-selector"><div class="week-strip" id="week-strip"></div></div>
+
+<div class="schedule-day-header">
+  <h2 id="selected-day-title">Today</h2>
+  <span class="schedule-count" id="schedule-count"></span>
+</div>
+
+<div id="schedule-list" class="schedule-grid">
+  {% for _ in range(4) %}
+  <div class="panel schedule-skel"><div class="skel" style="height:90px;border-radius:12px"></div></div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allScheduleItems = [];
+
+document.addEventListener("DOMContentLoaded", async () => {
+  generateWeekDays();
+  try {
+    const data = await api("/api/schedule");
+    if (data.error || !data.items || !data.items.length) {
+      document.getElementById("schedule-list").innerHTML =
+        '<div class="empty"><div class="empty-orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div><h3>No upcoming episodes</h3><p>Check back later for airing schedules.</p></div>';
+      return;
+    }
+    allScheduleItems = data.items;
+    selectDay(0);
+  } catch (e) {
+    document.getElementById("schedule-list").innerHTML =
+      '<div class="empty"><div class="empty-orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div><h3>Error loading schedule</h3><p>Please try again later.</p></div>';
+  }
+});
+
+function generateWeekDays() {
+  const strip = document.getElementById("week-strip");
+  const today = new Date();
+  const abbr = ['S','M','T','W','T','F','S'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    html += `<button class="week-day ${i === 0 ? 'active' : ''}" onclick="selectDay(${i})">
+      <span class="week-day-abbr">${abbr[d.getDay()]}</span>
+      <span class="week-day-num">${d.getDate()}</span>
+      <span class="week-day-month">${months[d.getMonth()]}</span>
+      ${i === 0 ? '<span class="week-day-today">Today</span>' : ''}
+    </button>`;
+  }
+  strip.innerHTML = html;
+}
+
+function selectDay(idx) {
+  $$(".week-day").forEach((el, i) => el.classList.toggle("active", i === idx));
+  const today = new Date();
+  const sel = new Date(today);
+  sel.setDate(today.getDate() + idx);
+  const start = Math.floor(new Date(sel.getFullYear(), sel.getMonth(), sel.getDate(), 0, 0, 0).getTime() / 1000);
+  const end = Math.floor(new Date(sel.getFullYear(), sel.getMonth(), sel.getDate(), 23, 59, 59).getTime() / 1000);
+  const items = allScheduleItems.filter(it => it.airing_at >= start && it.airing_at <= end)
+                                .sort((a, b) => a.airing_at - b.airing_at);
+  const names = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  document.getElementById("selected-day-title").textContent =
+    idx === 0 ? "Today" : idx === 1 ? "Tomorrow" : names[sel.getDay()];
+  document.getElementById("schedule-count").textContent =
+    items.length ? `${items.length} episode${items.length !== 1 ? 's' : ''}` : '';
+  renderSchedule(items);
+}
+
+function renderSchedule(items) {
+  const wrap = document.getElementById("schedule-list");
+  if (!items.length) {
+    wrap.innerHTML = '<div class="empty" style="min-height:200px"><div class="empty-orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div><h3>No episodes airing</h3><p>Nothing scheduled for this day. Try another day!</p></div>';
+    return;
+  }
+  let html = '<div class="schedule-day-items">';
+  for (const it of items) {
+    const timeStr = new Date(it.airing_at * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    html += `
+      <div class="schedule-card">
+        <a href="/anime/${it.mal_id}" class="schedule-poster">
+          <img loading="lazy" src="${esc(it.image_url || PLACEHOLDER)}" alt="">
+        </a>
+        <div class="schedule-info">
+          <a href="/anime/${it.mal_id}" class="schedule-title">${esc(it.title)}</a>
+          <div class="schedule-meta">
+            <span class="schedule-ep">EP ${it.episode || '?'}</span>
+            <span class="schedule-time">${timeStr}</span>
+            <span class="schedule-countdown">${getCountdown(it.airing_at)}</span>
+          </div>
+          ${it.score ? `<div class="schedule-score">★ ${scoreFmt(it.score)}</div>` : ''}
+        </div>
+        ${it.in_list
+          ? '<span class="schedule-check">✓</span>'
+          : `<button class="schedule-add" onclick="openEntrySheet({mal_id:${it.mal_id},title:'${esc(it.title).replace(/'/g, "\\'")}',image_url:'${esc(it.image_url || '')}',episodes:${it.episodes || 'null'},in_list:false})">+</button>`}
+      </div>`;
+  }
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+function getCountdown(ts) {
+  const diff = ts - Math.floor(Date.now() / 1000);
+  if (diff <= 0) return "Airing now";
+  const d = Math.floor(diff / 86400), h = Math.floor((diff % 86400) / 3600), m = Math.floor((diff % 3600) / 60);
+  if (d > 0) return `in ${d}d ${h}h`;
+  if (h > 0) return `in ${h}h ${m}m`;
+  return `in ${m}m`;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/ venv/ env/
+
+# Secrets & config
+.env
+.env.*
+!.env.example
+
+# Database & personal data
+data/
+*.db
+*.db-journal
+*.sqlite3
+backups/
+
+# Scripts & personal imports (keep local only)
+etc/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log

@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% from "partials.html" import card, empty_state %}
+{% set active = 'discover' %}
+{% block title %}Seasonal — {{ APP_NAME }}{% endblock %}
+{% block page_id %}seasonal{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="kicker">Now Airing</div>
+    <h1>{{ season }}</h1>
+    <p class="sub">The most popular anime of the current season.</p>
+  </div>
+</div>
+
+{% if items %}
+<div class="cards">
+  {% for a in items %}{{ card(a) }}{% endfor %}
+</div>
+{% else %}
+{{ empty_state('Could not load seasonal anime', 'The API may be rate-limited. Try again in a minute.', 'Back to Discover', '/discover') }}
+{% endif %}
+{% endblock %}

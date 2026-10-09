@@ -1,0 +1,84 @@
+{% extends "layout.html" %}
+{% from "partials.html" import card, empty_state %}
+{% set active = 'list' %}
+{% block title %}{{ page_title }} — {{ APP_NAME }}{% endblock %}
+{% block page_id %}list{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="kicker">{% if is_own_list %}Library{% else %}Public List{% endif %}</div>
+    <h1>{{ page_title }}</h1>
+    <p class="sub">
+      {{ counts.all }} anime tracked
+      {% if not is_own_list %} · by <a href="/user/{{ owner_user.username }}" style="color:var(--accent-2);font-weight:700">@{{ owner_user.username }}</a>{% endif %}
+    </p>
+  </div>
+  {% if not is_own_list %}
+  <div style="display:flex;gap:8px;align-items:center">
+    <span class="chip">View only</span>
+    <a class="btn btn-ghost btn-sm" href="/user/{{ owner_user.username }}">← Profile</a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="tabs">
+  {% for key, label in tabs %}
+  <a href="{{ list_base }}/{{ key }}" class="tab{% if status == key %} active{% endif %}">
+    {{ label }}<span class="count">{{ counts[key] }}</span>
+  </a>
+  {% endfor %}
+</div>
+
+<div class="toolbar-panel">
+  <div class="toolbar">
+    <div class="search-inline">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5" stroke-linecap="round"/>
+      </svg>
+      <input type="text" id="list-search" placeholder="Filter list…" value="{{ filters.q }}">
+      <span id="visible-count" style="font-size:11px;color:var(--muted);font-weight:600">{{ entries|length }}</span>
+    </div>
+    <select id="sort-select" aria-label="Sort by">
+      {% for v in sorts %}<option value="{{ v }}" {% if sort == v %}selected{% endif %}>{{ sort_labels[v] }}</option>{% endfor %}
+    </select>
+    <select id="f-genre" aria-label="Genre">
+      <option value="">All genres</option>
+      {% for g in genres %}<option value="{{ g }}" {% if filters.genre == g %}selected{% endif %}>{{ g }}</option>{% endfor %}
+    </select>
+    <select id="f-year" aria-label="Year">
+      <option value="">All years</option>
+      {% for y in years %}<option value="{{ y }}" {% if filters.year == y|string %}selected{% endif %}>{{ y }}</option>{% endfor %}
+    </select>
+    <select id="f-type" aria-label="Type">
+      <option value="">All types</option>
+      {% for t in types %}<option value="{{ t }}" {% if filters.type == t %}selected{% endif %}>{{ t }}</option>{% endfor %}
+    </select>
+    <select id="f-score" aria-label="Score">
+      <option value="">Any score</option>
+      <option value="9" {% if filters.score == '9' %}selected{% endif %}>9+</option>
+      <option value="8" {% if filters.score == '8' %}selected{% endif %}>8+</option>
+      <option value="7" {% if filters.score == '7' %}selected{% endif %}>7+</option>
+      <option value="6" {% if filters.score == '6' %}selected{% endif %}>6+</option>
+    </select>
+    <select id="f-prog" aria-label="Progress">
+      <option value="">All progress</option>
+      <option value="not_started" {% if filters.prog == 'not_started' %}selected{% endif %}>Not started</option>
+      <option value="partial" {% if filters.prog == 'partial' %}selected{% endif %}>In progress</option>
+      <option value="finished" {% if filters.prog == 'finished' %}selected{% endif %}>Finished</option>
+    </select>
+    <div class="view-toggle">
+      <button id="view-grid" class="{% if view == 'grid' %}on{% endif %}" title="Grid view">▦</button>
+      <button id="view-list" class="{% if view == 'list' %}on{% endif %}" title="List view">☰</button>
+    </div>
+  </div>
+</div>
+
+{% if entries %}
+<div class="cards" id="list-cards" data-view="{{ view }}">
+  {% for a in entries %}{{ card(a) }}{% endfor %}
+</div>
+{% else %}
+{{ empty_state('No anime found', 'Try adjusting the filters.' if not is_own_list else 'Try adjusting your filters or add some anime from Discover.', 'Discover anime', '/discover') }}
+{% endif %}
+{% endblock %}

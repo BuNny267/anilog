@@ -1,0 +1,143 @@
+{% macro card(a) %}
+{% set show_entry = a.in_list or a.view_only %}
+{% set can_edit = a.in_list and not a.view_only %}
+<div class="card" data-title="{{ (a.title or '')|lower }}">
+  <a class="card-link" href="/anime/{{ a.mal_id }}" aria-label="{{ a.title }}"></a>
+  <div class="poster">
+    <img loading="lazy" decoding="async"
+         src="{{ a.image_url or url_for('static', filename='images/placeholder.svg') }}" alt="">
+    {% if show_entry %}
+    <span class="chip st st-{{ a.status }}">
+      <span class="status-dot {{ a.status }}"></span>{{ STATUS_LABELS.get(a.status, a.status) }}
+    </span>
+    {% endif %}
+    {% if can_edit %}
+    <button class="fav-btn{% if a.favorite %} on{% endif %}"
+            data-fav='{{ {"mal_id": a.mal_id}|tojson|forceescape }}'
+            aria-label="Toggle favorite" title="Favorite">
+      <svg viewBox="0 0 24 24" width="14" height="14">
+        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
+              fill="{% if a.favorite %}currentColor{% else %}none{% endif %}"
+              stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <span class="quickadd" role="button" tabindex="0"
+          aria-label="{% if a.in_list %}Edit entry{% else %}Add to list{% endif %}"
+          data-json='{{ a|tojson|forceescape }}'>{{ "✓" if a.in_list else "+" }}</span>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    <div class="card-title">{{ a.title }}</div>
+    <div class="card-meta">
+      {% if a.score %}<span class="cm-score">★ {{ '%.1f'|format(a.score|s10) }}</span>{% endif %}
+      {% if a.score and a.episodes %}<span>•</span>{% endif %}
+      {% if a.episodes %}<span class="cm-ep">{{ a.episodes }} ep</span>{% endif %}
+    </div>
+    {% if show_entry %}
+    <div class="card-statusline">
+      <span class="status-dot {{ a.status }}"></span>
+      <span>{{ STATUS_LABELS.get(a.status, a.status) }}</span>
+      <span class="cs-ep">{{ a.current_episode or 0 }}/{{ a.total_episodes or '?' }}</span>
+    </div>
+    {% if a.total_episodes and a.total_episodes > 0 %}
+    <div class="pbar"><span style="width:{{ (a.current_episode or 0)|pct(a.total_episodes) }}%"></span></div>
+    {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}
+
+{% macro continue_watching_card(a) %}
+<div class="cw-card">
+  <a class="cw-poster" href="/anime/{{ a.mal_id }}" aria-label="{{ a.title }}">
+    <img loading="lazy" src="{{ a.image_url or url_for('static', filename='images/placeholder.svg') }}" alt="">
+    <div class="cw-play">▶</div>
+  </a>
+  <div class="cw-info">
+    <div class="cw-title">{{ a.title }}</div>
+    <div class="cw-ep">Episode {{ a.current_episode or 0 }} / {{ a.total_episodes or '?' }}</div>
+    {% if a.next_airing %}
+    <div class="cw-air"><span class="cw-air-dot"></span>EP {{ a.next_ep or '?' }} <span data-countdown="{{ a.next_airing }}">…</span></div>
+    {% endif %}
+    {% if a.total_episodes and a.total_episodes > 0 %}
+    <div class="pbar"><span style="width:{{ (a.current_episode or 0)|pct(a.total_episodes) }}%"></span></div>
+    {% else %}
+    <div class="pbar unknown"><span style="width:50%"></span></div>
+    {% endif %}
+    <div class="cw-actions">
+      <button class="btn btn-sm btn-primary"
+              data-progress='{{ {"mal_id": a.mal_id}|tojson|forceescape }}'>+1 Episode</button>
+      <a class="btn btn-sm btn-ghost" href="/anime/{{ a.mal_id }}">Details</a>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro empty_state(title, message, action_label=None, action_url=None) %}
+<div class="empty big-empty">
+  <div class="empty-orb">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <rect x="4" y="5" width="16" height="14" rx="2"/>
+      <path d="M8 5v14M16 5v14M4 9h4M12 9h4M4 15h4M12 15h4" stroke-width="1.4"/>
+    </svg>
+  </div>
+  <h3>{{ title }}</h3>
+  <p>{{ message }}</p>
+  {% if action_label and action_url %}
+  <a href="{{ action_url }}" class="btn btn-primary">{{ action_label }}</a>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% macro sicon(name) -%}
+<svg class="sicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{%- if name == 'sword' -%}<path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/>
+{%- elif name == 'compass' -%}<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 4-4 2 2-4z"/>
+{%- elif name == 'smile' -%}<circle cx="12" cy="12" r="9"/><path d="M8.5 13.5s1.3 2.2 3.5 2.2 3.5-2.2 3.5-2.2M9 9.5h.01M15 9.5h.01"/>
+{%- elif name == 'masks' -%}<path d="M4 5c2.5 1 5 1.5 8 1.5S17.5 6 20 5v6c0 5-3.5 8.5-8 8.5S4 16 4 11z"/><path d="M9 10h.01M15 10h.01M9.5 14s1 1.2 2.5 1.2 2.5-1.2 2.5-1.2"/>
+{%- elif name == 'sparkles' -%}<path d="M12 4l1.7 4.6 4.8 1.4-4.8 1.4L12 16l-1.7-4.6L5.5 10l4.8-1.4z"/><path d="M19 15l.7 1.8 1.8.7-1.8.7L19 20l-.7-1.8-1.8-.7 1.8-.7z"/>
+{%- elif name == 'ghost' -%}<path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/><path d="M9 10h.01M15 10h.01"/>
+{%- elif name == 'music' -%}<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+{%- elif name == 'search' -%}<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+{%- elif name == 'activity' -%}<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+{%- elif name == 'heart' -%}<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+{%- elif name == 'rocket' -%}<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
+{%- elif name == 'coffee' -%}<path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><path d="M6 2v2M10 2v2M14 2v2"/>
+{%- elif name == 'trophy' -%}<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+{%- elif name == 'star4' -%}<path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/>
+{%- elif name == 'crosshair' -%}<circle cx="12" cy="12" r="7"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+{%- elif name == 'landmark' -%}<path d="M3 8l9-6 9 6M4 8v10M8.5 8v10M15.5 8v10M20 8v10M2 22h20"/>
+{%- elif name == 'shield' -%}<path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"/>
+{%- elif name == 'gradcap' -%}<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/>
+{%- elif name == 'bot' -%}<rect x="4" y="8" width="16" height="12" rx="4"/><path d="M12 8V4M9 13h.01M15 13h.01"/>
+{%- elif name == 'star' -%}<path d="m12 4 2.5 5 5.5.8-4 3.9.9 5.4-4.9-2.6-4.9 2.6.9-5.4-4-3.9 5.5-.8z"/>
+{%- elif name == 'film' -%}<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 5v14M16 5v14M4 9h4M12 9h4M4 15h4M12 15h4"/>
+{%- elif name == 'clock' -%}<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>
+{%- elif name == 'broadcast' -%}<circle cx="12" cy="12" r="2"/><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8"/>
+{%- elif name == 'calendar' -%}<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 9h16"/>
+{%- elif name == 'leaf' -%}<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5.1-6C9.5 14.5 12 13 13 12"/>
+{%- elif name == 'book' -%}<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+{%- elif name == 'brush' -%}<path d="m9.06 11.9 8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/>
+{%- elif name == 'chart' -%}<path d="M3 3v18h18"/><path d="M8 17v-6M13 17V7M18 17v-3"/>
+{%- else -%}<path d="M20.6 13.4 12 22 2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><path d="M7 7h.01"/>
+{%- endif -%}
+</svg>
+{%- endmacro %}
+
+{% macro event_row(ev) %}
+<div class="act-row">
+  <img class="act-thumb" loading="lazy" src="{{ ev.image_url or url_for('static', filename='images/placeholder.svg') }}" alt="">
+  <div class="act-main">
+    <a class="act-title" href="/anime/{{ ev.anime_id }}">{{ ev.title or ('Anime #' ~ ev.anime_id) }}</a>
+    <div class="act-desc">
+      {% if ev.episode_to is not none and ev.episode_to != ev.episode_from %}
+        {% if ev.episode_to == ev.episode_from + 1 %}Watched episode {{ ev.episode_to }}
+        {% else %}Watched episodes {{ ev.episode_from + 1 }}–{{ ev.episode_to }}{% endif %}
+      {% elif ev.status_to and ev.status_to != ev.status_from %}
+        Moved to {{ STATUS_LABELS.get(ev.status_to, ev.status_to) }}
+      {% else %}Updated entry{% endif %}
+    </div>
+  </div>
+  <span class="act-time">{{ ev.created_at|ago }}</span>
+</div>
+{% endmacro %}

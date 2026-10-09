@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+{% from "partials.html" import empty_state %}
+{% block title %}{{ profile_user.display_name or profile_user.username }} — {{ APP_NAME }}{% endblock %}
+{% block page_id %}profile{% endblock %}
+
+{% block content %}
+<div class="pcard" {% if is_own_profile %}data-own="1"{% endif %}>
+  <div class="pcard__banner{% if not is_own_profile %} pcard__banner--alt{% endif %}"></div>
+  <div class="pcard__body">
+    <span class="pcard__avatar" id="pcard-avatar">{{ (profile_user.display_name or profile_user.username)[0]|upper }}</span>
+    <div class="pcard__id">
+      <h1 id="pcard-name">{{ profile_user.display_name or profile_user.username }}</h1>
+      <div class="pcard__meta">
+        <span id="pcard-handle">@{{ profile_user.username }}</span>
+        <span>·</span>
+        <span>Joined {{ profile_user.created_at|dt }}</span>
+        {% if profile_user.is_admin %}<span class="badge badge-warning">Admin</span>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if not show_list %}
+  {{ empty_state('This list is private', 'This user has chosen to keep their anime list hidden.', 'Back home', '/') }}
+{% else %}
+<div class="prof-grid">
+  <aside class="panel prof-stats">
+    <h2 class="panel-title">Stats</h2>
+    <div class="stat-rows">
+      <div class="stat-row"><span>Anime</span><b>{{ totals.entries }}</b></div>
+      <div class="stat-row"><span>Episodes</span><b>{{ totals.episodes }}</b></div>
+      <div class="stat-row"><span>Completed</span><b>{{ totals.completed }}</b></div>
+      <div class="stat-row"><span>Watching</span><b>{{ totals.watching }}</b></div>
+      <div class="stat-row"><span>Favorites</span><b>{{ totals.favorites }}</b></div>
+      <div class="stat-row"><span>Avg Score</span><b>{{ totals.avg_score or '—' }}</b></div>
+    </div>
+  </aside>
+
+  <section class="panel prof-list">
+    <div class="prof-list-head">
+      <h2 class="panel-title" style="margin:0">Anime List</h2>
+      {% if is_own_profile %}
+      <a class="see-all" href="/list">Full list</a>
+      {% else %}
+      <a class="btn btn-sm btn-secondary" href="/user/{{ profile_user.username }}/list">View Full List</a>
+      {% endif %}
+    </div>
+
+    {% if entries %}
+    <div class="plist">
+      {% for a in entries %}
+      <a class="plist-row" href="/anime/{{ a.mal_id }}">
+        <img class="plist-thumb" loading="lazy"
+             src="{{ a.image_url or url_for('static', filename='images/placeholder.svg') }}" alt="">
+        <div class="plist-main">
+          <span class="plist-title">{{ a.title or ('Anime #' ~ a.mal_id) }}</span>
+          <span class="plist-sub">
+            <span class="status-dot {{ a.status }}"></span>{{ STATUS_LABELS.get(a.status, a.status) }}
+            {% if a.type %} · {{ a.type }}{% endif %}{% if a.year %} · {{ a.year }}{% endif %}
+          </span>
+        </div>
+        <div class="plist-ep">
+          <span class="plist-epnum"><b>{{ a.current_episode or 0 }}</b>/{{ a.total_episodes or '?' }}</span>
+          <span class="plist-bar"><span style="width:{{ (a.current_episode or 0)|pct(a.total_episodes) }}%"></span></span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    <p class="list-note">Showing 10 most recently updated</p>
+    {% else %}
+    <p class="muted" style="padding:12px 0">
+      {% if is_own_profile %}Your list is empty — add anime from Discover.{% else %}This user hasn't added any anime yet.{% endif %}
+    </p>
+    {% endif %}
+  </section>
+</div>
+{% endif %}
+{% endblock %}

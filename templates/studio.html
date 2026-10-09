@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% from "partials.html" import card, empty_state %}
+{% set active = 'discover' %}
+{% block title %}{{ name }} — {{ APP_NAME }}{% endblock %}
+{% block page_id %}studio{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="kicker">Studio</div>
+    <h1>{{ name }}</h1>
+    <p class="sub">{{ entries|length }} titles cached.</p>
+  </div>
+  <a href="/studios" class="btn btn-ghost">← All studios</a>
+</div>
+{% if entries %}
+<div class="cards">
+  {% for a in entries %}{{ card(a) }}{% endfor %}
+</div>
+{% else %}
+{{ empty_state('No titles', 'This studio has no cached anime yet.', 'Discover', '/discover') }}
+{% endif %}
+{% endblock %}

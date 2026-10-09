@@ -1,0 +1,63 @@
+{% extends "layout.html" %}
+{% set active = 'discover' %}
+{% block title %}Discover — {{ APP_NAME }}{% endblock %}
+{% block page_id %}discover{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="kicker">Explore</div>
+    <h1>Discover</h1>
+    <p class="sub">Fresh picks from AniList · {{ season }}</p>
+  </div>
+  <div style="display:flex;gap:8px">
+    <a href="/seasonal" class="btn btn-secondary">Seasonal</a>
+    <a href="/genres" class="btn btn-secondary">Genres</a>
+    <a href="/studios" class="btn btn-secondary">Studios</a>
+    <button id="refresh-discover" class="btn btn-secondary" title="Refresh all sections">↻ Refresh</button>
+  </div>
+</div>
+
+{% for s in sections %}
+<section class="section discover-sec" data-src="/api/discover/{{ s.key }}">
+  <div class="section-head">
+    <div><div class="kicker">Browse</div><h2>{{ s.title }}</h2></div>
+    <span class="sec-badge" data-role="status"></span>
+  </div>
+  <div class="panel discover-panel">
+    <div class="hscroll cards-row" data-cards>
+      {% for _ in range(6) %}
+      <div class="card skel-card" aria-hidden="true">
+        <div class="poster skel"></div>
+        <div class="card-body">
+          <div class="skel-line skel"></div>
+          <div class="skel-line skel short"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("refresh-discover");
+  if (!btn) return;
+  btn.onclick = async () => {
+    btn.disabled = true;
+    btn.textContent = "Refreshing…";
+    try {
+      const res = await fetch("/api/discover/refresh", { method: "POST" });
+      const data = await res.json();
+      if (data.ok) { toast("Discover cache refreshed ✓", "success"); setTimeout(() => location.reload(), 800); }
+      else toast(data.error || "Refresh failed", "error");
+    } catch (e) { toast("Refresh failed", "error"); }
+    btn.disabled = false;
+    btn.textContent = "↻ Refresh";
+  };
+});
+</script>
+{% endblock %}

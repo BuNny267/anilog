@@ -1,0 +1,310 @@
+{% extends "layout.html" %}
+{% set active = 'settings' %}
+{% block title %}Settings — {{ APP_NAME }}{% endblock %}
+{% block page_id %}settings{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="kicker">Preferences</div>
+    <h1>Settings</h1>
+    <p class="sub">Everything updates instantly — no refresh needed.</p>
+  </div>
+  <a href="/profile" class="btn btn-ghost">← Profile</a>
+</div>
+
+<div class="set-tabs">
+  <button class="set-tab active" data-panel="account">Account</button>
+  <button class="set-tab" data-panel="security">Security</button>
+  <button class="set-tab" data-panel="appearance">Appearance</button>
+  <button class="set-tab" data-panel="privacy">Privacy</button>
+  <button class="set-tab" data-panel="defaults">Defaults</button>
+  <button class="set-tab" data-panel="data">Data</button>
+</div>
+
+<!-- ===== ACCOUNT ===== -->
+<section class="set-panel active" id="panel-account">
+  <div class="panel">
+    <h2 class="panel-title">Identity</h2>
+    <div class="setting-row">
+      <div class="setting-txt"><b>Display Name</b><small>Shown on your profile, comments and menu.</small></div>
+      <form id="display-name-form" style="display:flex;gap:8px;flex:1;max-width:340px">
+        <input type="text" name="display_name" value="{{ user.display_name or '' }}" placeholder="Your name" maxlength="50"
+               style="flex:1;height:42px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;padding:0 12px;color:var(--text)">
+        <button class="btn btn-primary" type="submit">Save</button>
+      </form>
+    </div>
+    <div class="setting-row">
+      <div class="setting-txt"><b>Username</b><small id="current-username">@{{ user.username }}</small></div>
+      <div id="username-area" style="flex:1;max-width:340px">
+        {% if can_change_username %}
+        <form id="username-form" style="display:flex;gap:8px">
+          <input type="text" name="username" placeholder="new_username" required minlength="3" maxlength="30" pattern="[a-zA-Z0-9_]+"
+                 style="flex:1;height:42px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;padding:0 12px;color:var(--text)">
+          <button class="btn" type="submit">Change</button>
+        </form>
+        <p class="profile-help" style="margin:6px 0 0">Once every 30 days.</p>
+        {% else %}
+        <div class="profile-notice"><p>Changed recently — available again in <strong>{{ days_remaining }} days</strong>.</p></div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-txt">
+        <b>Email</b>
+        <small>{{ user.email or 'No email set' }}
+          <span class="badge badge-success" id="email-badge" {% if not user.email_verified %}hidden{% endif %}>✓ Verified</span>
+          {% if user.email and not user.email_verified %}<span class="badge badge-warning">Unverified</span>{% endif %}
+        </small>
+      </div>
+      <div id="verify-area" style="flex:1;max-width:340px">
+        {% if user.email and not user.email_verified %}
+        <button id="send-verification-btn" class="btn btn-secondary" style="width:100%">Send Verification Code</button>
+        <form id="verify-email-form" style="display:none;margin-top:8px" >
+          <div style="display:flex;gap:8px">
+            <input type="text" name="verification_code" placeholder="6-digit code" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required
+                   style="flex:1;height:42px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;padding:0 12px;color:var(--text)">
+            <button class="btn btn-primary" type="submit">Verify</button>
+          </div>
+        </form>
+        {% else %}
+        <p class="muted small" style="text-align:right">{% if user.email_verified %}All good ✓{% else %}Add email via admin{% endif %}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECURITY ===== -->
+<section class="set-panel" id="panel-security">
+  <div class="panel">
+    <h2 class="panel-title">Change Password</h2>
+    <form id="password-form" class="profile-form" style="max-width:420px">
+      <div class="profile-field"><label for="current_password">Current Password</label>
+        <input type="password" id="current_password" name="current_password" placeholder="••••••••" required autocomplete="current-password"></div>
+      <div class="profile-field"><label for="new_password">New Password</label>
+        <input type="password" id="new_password" name="new_password" placeholder="Min 8 characters" required minlength="8" autocomplete="new-password"></div>
+      <div class="profile-field"><label for="confirm_password">Confirm New Password</label>
+        <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat new password" required minlength="8" autocomplete="new-password"></div>
+      <button type="submit" class="btn btn-primary">Update Password</button>
+    </form>
+  </div>
+  <div class="panel">
+    <h2 class="panel-title">Session</h2>
+    <div class="setting-row danger" style="border:0;padding-bottom:0">
+      <div class="setting-txt"><b>Sign Out</b><small>End this session on this device.</small></div>
+      <a href="/logout" class="btn btn-danger">Logout</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== APPEARANCE ===== -->
+<section class="set-panel" id="panel-appearance">
+  <div class="panel">
+    <h2 class="panel-title">Look & Feel</h2>
+    <div class="setting-row">
+      <div class="setting-txt"><b>Theme</b><small>Dark, light, or match system.</small></div>
+      <div class="seg">
+        {% for v, lbl in [('system','System'), ('light','Light'), ('dark','Dark')] %}
+        <label><input type="radio" name="theme" value="{{ v }}" data-setting="theme" {% if s.theme == v %}checked{% endif %}><span>{{ lbl }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-txt"><b>Accent Color</b><small>Primary color everywhere.</small></div>
+      <div class="seg accent-seg">
+        {% for v, lbl in [('purple','Purple'), ('blue','Blue'), ('green','Green'), ('red','Red'), ('orange','Orange'), ('pink','Pink')] %}
+        <label><input type="radio" name="accent_color" value="{{ v }}" data-setting="accent_color" {% if s.accent_color == v %}checked{% endif %}><span class="accent-dot accent-{{ v }}"></span><span>{{ lbl }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-txt"><b>Card Layout</b><small>Compact = more posters per row.</small></div>
+      <div class="seg">
+        {% for v, lbl in [('compact','Compact'), ('large','Large')] %}
+        <label><input type="radio" name="card_layout" value="{{ v }}" data-setting="card_layout" {% if s.card_layout == v %}checked{% endif %}><span>{{ lbl }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-txt"><b>Animations</b><small>Transitions and effects.</small></div>
+      <label class="switch"><input type="checkbox" data-setting="animations" {% if s.animations == 'on' %}checked{% endif %}><span></span></label>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PRIVACY ===== -->
+<section class="set-panel" id="panel-privacy">
+  <div class="panel">
+    <h2 class="panel-title">Profile Visibility</h2>
+    <div class="setting-row">
+      <div class="setting-txt"><b>Who can see your list?</b><small id="privacy-hint">{% if s.profile_visibility == 'public' %}Anyone logged in can view your profile and list.{% else %}Only you can see your list. Your profile page shows a private notice.{% endif %}</small></div>
+      <div class="seg">
+        <label><input type="radio" name="profile_visibility" value="public" data-setting="profile_visibility" {% if s.profile_visibility == 'public' %}checked{% endif %}><span>🌐 Public</span></label>
+        <label><input type="radio" name="profile_visibility" value="private" data-setting="profile_visibility" {% if s.profile_visibility == 'private' %}checked{% endif %}><span>🔒 Private</span></label>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== DEFAULTS ===== -->
+<section class="set-panel" id="panel-defaults">
+  <div class="panel">
+    <h2 class="panel-title">Tracking Defaults</h2>
+    <div class="setting-row">
+      <div class="setting-txt"><b>List View</b><small>Grid or list on My List.</small></div>
+      <div class="seg">
+        {% for v, lbl in [('grid','Grid'), ('list','List')] %}
+        <label><input type="radio" name="default_view" value="{{ v }}" data-setting="default_view" {% if s.default_view == v %}checked{% endif %}><span>{{ lbl }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-txt"><b>Default Sort</b><small>How My List is ordered on open.</small></div>
+      <select class="set-select" data-setting="default_sort">
+        {% for v, lbl in [('updated','Recently updated'), ('added','Recently added'), ('title','Title'), ('score','Community score'), ('year','Release year'), ('progress','Progress')] %}
+        <option value="{{ v }}" {% if s.default_sort == v %}selected{% endif %}>{{ lbl }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="setting-row">
+      <div class="setting-txt"><b>Auto-complete</b><small>Move to Completed at final episode.</small></div>
+      <label class="switch"><input type="checkbox" data-setting="auto_complete" {% if s.auto_complete == 'on' %}checked{% endif %}><span></span></label>
+    </div>
+  </div>
+</section>
+
+<!-- ===== DATA ===== -->
+<section class="set-panel" id="panel-data">
+  <div class="panel">
+    <h2 class="panel-title">Backup & Storage</h2>
+    <div class="setting-row">
+      <div class="setting-txt"><b>Export List</b><small>Download {{ entry_count }} entries as JSON.</small></div>
+      <a class="btn" href="/profile/export" download>Export</a>
+    </div>
+    <div class="setting-row">
+      <div class="setting-txt"><b>Import List</b><small>Restore from a JSON export.</small></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="file" id="import-file" accept=".json" style="font-size:12px;color:var(--muted);max-width:190px">
+        <button class="btn btn-secondary" id="btn-import">Import</button>
+      </div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-txt"><b>Clear Cache</b><small>Remove cached AniList API data.</small></div>
+      <button class="btn" id="btn-clear-cache">Clear Cache</button>
+    </div>
+  </div>
+  <div class="panel">
+    <h2 class="panel-title">About</h2>
+    <p class="muted small"><b>{{ APP_NAME }}</b> v{{ version }} — self-hosted multi-user anime tracker. Flask + SQLite + vanilla JS. Powered by AniList.</p>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  /* ----- Tabs ----- */
+  const tabs = $$(".set-tab");
+  const show = id => {
+    tabs.forEach(t => t.classList.toggle("active", t.dataset.panel === id));
+    $$(".set-panel").forEach(p => p.classList.toggle("active", p.id === "panel-" + id));
+  };
+  tabs.forEach(t => t.onclick = () => { show(t.dataset.panel); history.replaceState(null, "", "#" + t.dataset.panel); });
+  const hash = location.hash.replace("#", "");
+  if (hash && document.getElementById("panel-" + hash)) show(hash);
+
+  /* ----- Display name (live) ----- */
+  const dnForm = document.getElementById("display-name-form");
+  dnForm.onsubmit = async e => {
+    e.preventDefault();
+    const val = new FormData(dnForm).get("display_name").trim();
+    const res = await api("/api/profile/update-display-name", { method: "POST", body: JSON.stringify({ display_name: val }) });
+    if (res.ok) {
+      window.CURRENT_USER.display_name = res.display_name;
+      refreshUserUI();
+      toast("Display name updated ✓", "success");
+    } else toast(res.error || "Failed", "error");
+  };
+
+  /* ----- Username (live) ----- */
+  const uForm = document.getElementById("username-form");
+  if (uForm) uForm.onsubmit = async e => {
+    e.preventDefault();
+    const val = new FormData(uForm).get("username").trim();
+    const res = await api("/api/profile/update-username", { method: "POST", body: JSON.stringify({ username: val }) });
+    if (res.ok) {
+      window.CURRENT_USER.username = res.username;
+      refreshUserUI();
+      document.getElementById("username-area").innerHTML =
+        `<div class="profile-notice"><p>Username changed to <strong>@${esc(res.username)}</strong>. Next change in 30 days.</p></div>`;
+      toast(res.message, "success");
+    } else toast(res.error || "Failed", "error");
+  };
+
+  /* ----- Email verification (live) ----- */
+  const sendBtn = document.getElementById("send-verification-btn");
+  if (sendBtn) sendBtn.onclick = async () => {
+    sendBtn.disabled = true; sendBtn.textContent = "Sending…";
+    const res = await api("/api/profile/send-verification", { method: "POST" });
+    if (res.ok) {
+      toast("Verification code sent ✓", "success");
+      document.getElementById("verify-email-form").style.display = "block";
+      sendBtn.style.display = "none";
+    } else { toast(res.error || "Failed", "error"); sendBtn.disabled = false; sendBtn.textContent = "Send Verification Code"; }
+  };
+  const vForm = document.getElementById("verify-email-form");
+  if (vForm) vForm.onsubmit = async e => {
+    e.preventDefault();
+    const code = new FormData(vForm).get("verification_code");
+    const res = await api("/api/profile/verify-email", { method: "POST", body: JSON.stringify({ code }) });
+    if (res.ok) {
+      window.CURRENT_USER.email_verified = true;
+      refreshUserUI();
+      const badge = document.getElementById("email-badge");
+      if (badge) badge.hidden = false;
+      document.getElementById("verify-area").innerHTML =
+        `<div class="profile-notice" style="border-color:rgba(66,211,146,.35);background:rgba(66,211,146,.08)"><p>Email verified ✓</p></div>`;
+      toast("Email verified ✓", "success");
+    } else toast(res.error || "Invalid code", "error");
+  };
+
+  /* ----- Password ----- */
+  const pwForm = document.getElementById("password-form");
+  pwForm.onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(pwForm);
+    if (fd.get("new_password") !== fd.get("confirm_password")) return toast("Passwords do not match", "error");
+    const res = await api("/api/profile/update-password", { method: "POST", body: JSON.stringify({
+      current_password: fd.get("current_password"),
+      new_password: fd.get("new_password"),
+      confirm_password: fd.get("confirm_password") }) });
+    if (res.ok) { toast("Password updated ✓", "success"); pwForm.reset(); }
+    else toast(res.error || "Failed", "error");
+  };
+
+  /* ----- Privacy hint live ----- */
+  $$('input[data-setting="profile_visibility"]').forEach(r => r.addEventListener("change", () => {
+    const hint = document.getElementById("privacy-hint");
+    if (hint) hint.textContent = r.value === "public"
+      ? "Anyone logged in can view your profile and list."
+      : "Only you can see your list. Your profile page shows a private notice.";
+  }));
+
+  /* ----- Import ----- */
+  const btnImport = document.getElementById("btn-import");
+  btnImport.onclick = async () => {
+    const file = document.getElementById("import-file").files[0];
+    if (!file) return toast("Choose a JSON file first.", "error");
+    btnImport.disabled = true; btnImport.textContent = "Importing…";
+    const fd = new FormData(); fd.append("file", file);
+    try {
+      const res = await fetch("/profile/import", { method: "POST", body: fd });
+      const data = await res.json();
+      data.ok ? toast(data.message, "success") : toast(data.error || "Import failed", "error");
+    } catch (e) { toast("Import failed: " + e.message, "error"); }
+    btnImport.disabled = false; btnImport.textContent = "Import";
+  };
+});
+</script>
+{% endblock %}

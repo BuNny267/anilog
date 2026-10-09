@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% from "partials.html" import card, empty_state %}
+{% set active = 'home' %}
+{% block title %}Recently Updated — {{ APP_NAME }}{% endblock %}
+{% block page_id %}recent{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="kicker">Activity</div>
+    <h1>Recently Updated</h1>
+    <p class="sub">Your latest list activity, newest first.</p>
+  </div>
+</div>
+
+{% if entries %}
+<div class="cards">
+  {% for a in entries %}{{ card(a) }}{% endfor %}
+</div>
+{% else %}
+{{ empty_state('Nothing here yet', 'Update some anime progress and it will show up here.', 'My List', '/list') }}
+{% endif %}
+{% endblock %}
